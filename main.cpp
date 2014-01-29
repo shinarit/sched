@@ -23,7 +23,7 @@ void receiveResources(const char* resFile, ResourceMonitor* resMonPtr)
 
     resMon.addResource(nodeId);
 
-    resMon.print();
+    //resMon.print();
     std::cout << '\n';
   }
 }
@@ -33,6 +33,8 @@ int main(int argc, char* argv[])
 {
   std::srand(std::time(0));
   ResourceMonitor resMon;
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   std::thread resourceReceive(receiveResources, argv[1], &resMon);
   std::thread scheduleAndReceiveJobs(scheduler, argv[2], &resMon);

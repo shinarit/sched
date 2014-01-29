@@ -27,6 +27,12 @@ struct JobMonitor
     mJobRecords[idCounter] = std::make_pair(std::thread(job, idCounter, millisecs, this), resDesc);
     ++idCounter;
 
+    std::cout << "added job with resources: ";
+    for (const auto& resPair : resDesc)
+    {
+      std::cout << "  " << resPair.first << ": " << resPair.second << '\n';
+    }
+
     mJobMutex.unlock();
   }
 
@@ -46,8 +52,10 @@ struct JobMonitor
       mResMon.freeResource(resPair.first, resPair.second);
     }
 
-    mJobMutex.unlock();
+    std::cout << "finished job. resource state:\n";
+    mResMon.print();
 
+    mJobMutex.unlock();
   }
 
   ResourceMonitor& mResMon;

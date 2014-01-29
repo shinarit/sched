@@ -3,53 +3,69 @@
 #include <iostream>
 #include <mutex>
 #include <map>
+#include <algorithm>
 
 struct ResourceMonitor
 {
   ResourceMonitor(){}
   void addResource(int nodeId)
   {
-    mResourceMutex.lock();
+    Lock lock(mResourceMutex);
 
     ++mData[nodeId].first;
     ++mData[nodeId].second;
-
-    mResourceMutex.unlock();
+    ++mAllFree;
   }
 
   void freeResource(int nodeId, int res)
   {
-    mResourceMutex.lock();
+    Lock lock(mResourceMutex);
 
     mData[nodeId].second += res;
-
-    mResourceMutex.unlock();
+    mAllFree += res;
   }
 
   void claimResource(int nodeId, int res)
   {
-    mResourceMutex.lock();
+    Lock lock(mResourceMutex);
 
     mData[nodeId].second -= res;
-
-    mResourceMutex.unlock();
+    mAllFree -= res;
   }
 
-  int findFreeInOne(int res)
+  int findBigEnough(int res)
   {
-    return 0;
+    Lock lock(mResourceMutex);
+
+    if (mAllFree < res)
+    {
+      return -1;
+    }
+
+    auto iter(std::find_if(mData.begin(), mData.end(), [=](const ResourceMonitorData::value_type& pair){ return res <= pair.second.second; }));
+    if (iter == mData.end())
+    {
+      return -1;
+    }
+    return iter->first;
+  }
+
+  int allFree() const
+  {
+    return mAllFree;
   }
 
   void print()
   {
-    mResourceMutex.lock();
+    Lock lock(mResourceMutex);
     for (const auto& resPair : mData)
     {
       std::cout << resPair.first << ": " << resPair.second.second << " / " << resPair.second.first << '\n';
     }
-    mResourceMutex.unlock();
   }
 
+  typedef std::unique_lock<std::mutex> Lock;
+  int mAllFree = 0;
   std::mutex mResourceMutex;
   //(nodeID, (all, free))
   typedef std::map<int, std::pair<int, int>> ResourceMonitorData;
