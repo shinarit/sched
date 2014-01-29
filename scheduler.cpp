@@ -72,6 +72,7 @@ void scheduler(const char* jobsFile, ResourceMonitor* resMonPtr)
           int remainingRes(jobRes);
           while (remainingRes > 0)
           {
+            //searching always from the beginning and everything again is not ideal
             int nodeId(resMon.findBigEnough(jobRes));
             if (-1 != nodeId)
             {

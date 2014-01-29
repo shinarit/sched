@@ -69,6 +69,7 @@ struct ResourceMonitor
   std::mutex mResourceMutex;
   //(nodeID, (all, free))
   typedef std::map<int, std::pair<int, int>> ResourceMonitorData;
+  //should use a more effective structure
   ResourceMonitorData mData;
 
   ResourceMonitor(const ResourceMonitor&);
