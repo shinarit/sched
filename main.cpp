@@ -10,6 +10,7 @@
 #include <ctime>
 
 #include "resource_monitor.hpp"
+#include "scheduler.hpp"
 
 void receiveResources(const char* resFile, ResourceMonitor* resMonPtr)
 {
@@ -19,22 +20,22 @@ void receiveResources(const char* resFile, ResourceMonitor* resMonPtr)
   while (in >> nodeId)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(std::rand() % 10 * 100));
-//    std::cout << nodeId << '\n';
-
 
     resMon.addResource(nodeId);
 
     resMon.print();
     std::cout << '\n';
-
   }
 }
 
+//usage: <programBinary> <resourceFile> <jobfile>
 int main(int argc, char* argv[]) 
 {
   std::srand(std::time(0));
   ResourceMonitor resMon;
 
-  std::thread first(receiveResources, argv[1], &resMon);
-  first.join();                // pauses until first finishes
+  std::thread resourceReceive(receiveResources, argv[1], &resMon);
+  std::thread scheduleAndReceiveJobs(scheduler, argv[2], &resMon);
+  resourceReceive.join();
+  scheduleAndReceiveJobs.join();
 }
