@@ -17,7 +17,7 @@ struct JobMonitor
 
   void addJob(int millisecs, const ResourceDescriptor& resDesc)
   {
-    mJobMutex.lock();
+    Lock lock(mJobMutex);
 
     for (const auto& resPair : resDesc)
     {
@@ -27,25 +27,23 @@ struct JobMonitor
     mJobRecords[idCounter] = std::make_pair(std::thread(job, idCounter, millisecs, this), resDesc);
     ++idCounter;
 
-    std::cout << "added job with resources: ";
+    std::cout << "added job(" << idCounter - 1 << ") for " << millisecs << " millisec with resources:\n";
     for (const auto& resPair : resDesc)
     {
       std::cout << "  " << resPair.first << ": " << resPair.second << '\n';
     }
-
-    mJobMutex.unlock();
   }
 
   void removeJob(int jobId)
   {
-    mJobMutex.lock();
+    Lock lock(mJobMutex);
 
     auto& jobDescriptor(mJobRecords[jobId]);
-
+    
     if (jobDescriptor.first.joinable())
     {
       jobDescriptor.first.join();
-    }
+    }    
 
     for (const auto& resPair : jobDescriptor.second)
     {
@@ -55,12 +53,13 @@ struct JobMonitor
     std::cout << "finished job. resource state:\n";
     mResMon.print();
 
-    mJobMutex.unlock();
+    mJobRecords.erase(jobId);
   }
 
   ResourceMonitor& mResMon;
 
   int idCounter = 0;
+  typedef std::unique_lock<std::mutex> Lock;
   std::mutex mJobMutex;
 
   //(id, (thread, <resdesc>))

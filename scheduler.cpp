@@ -28,7 +28,7 @@ struct OldestWithMaxResourceNeed
 
 int getJobMillisecs()
 {
-  return std::rand() % 30 * 10;
+  return std::rand() % 30 * 100 + 100;
 }
 
 void scheduler(const char* jobsFile, ResourceMonitor* resMonPtr)
@@ -39,19 +39,21 @@ void scheduler(const char* jobsFile, ResourceMonitor* resMonPtr)
   JobQueue jobQ;
 
   std::ifstream in(jobsFile);
-  int jobRes;
-  while (in >> jobRes)
+  do
   {
-    //int nodeId = resMon.findBigEnough(jobRes);
-    int nodeId = -1;
-    if (-1 != nodeId)
+    int jobRes;
+    if (in >> jobRes)
     {
-      JobMonitor::ResourceDescriptor desc{ { nodeId, jobRes } };
-      jobMonitor.addJob(getJobMillisecs(), desc);
-    }
-    else
-    {
-      jobQ.push_back({ jobRes, std::chrono::system_clock::now() });
+      int nodeId = resMon.findBigEnough(jobRes);
+      if (-1 != nodeId)
+      {
+        JobMonitor::ResourceDescriptor desc{ { nodeId, jobRes } };
+        jobMonitor.addJob(getJobMillisecs(), desc);
+      }
+      else
+      {
+        jobQ.push_back({ jobRes, std::chrono::system_clock::now() });
+      }
     }
 
     int nextJobArrivesIn(std::rand() % 10 + 2);
@@ -84,9 +86,10 @@ void scheduler(const char* jobsFile, ResourceMonitor* resMonPtr)
               --jobRes;
           }
           jobMonitor.addJob(getJobMillisecs(), desc);
+          jobQ.erase(iter);
         }
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-  }
+  } while (!jobQ.empty() || !jobMonitor.mJobRecords.empty());
 }
