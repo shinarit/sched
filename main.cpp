@@ -23,8 +23,9 @@ void receiveResources(const char* resFile, ResourceMonitor* resMonPtr)
 
     resMon.addResource(nodeId);
 
-    //resMon.print();
-//    std::cout << '\n';
+    std::cout << "resource arrived\n";
+    resMon.print();
+    std::cout << '\n';
   }
 }
 

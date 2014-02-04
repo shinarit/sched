@@ -5,7 +5,6 @@
 #include <mutex>
 #include <thread>
 
-#include "job.hpp"
 #include "resource_monitor.hpp"
 
 struct JobMonitor
@@ -19,19 +18,15 @@ struct JobMonitor
   {
     Lock lock(mJobMutex);
 
-    for (const auto& resPair : resDesc)
-    {
-      mResMon.claimResource(resPair.first, resPair.second);
-    }
-
-    mJobRecords[idCounter] = std::make_pair(std::thread(job, idCounter, millisecs, this), resDesc);
+    mJobRecords[idCounter] = std::make_pair(millisecs, resDesc);
     ++idCounter;
 
-    std::cout << "added job(" << idCounter - 1 << ") for " << millisecs << " millisec with resources:\n";
+    std::cout << "started job(" << idCounter - 1 << ") for " << millisecs << " millisec with resources:\n";
     for (const auto& resPair : resDesc)
     {
       std::cout << "  " << resPair.first << ": " << resPair.second << '\n';
     }
+    std::cout << '\n';
   }
 
   void removeJob(int jobId)
@@ -40,11 +35,6 @@ struct JobMonitor
 
     auto& jobDescriptor(mJobRecords[jobId]);
     
-    if (jobDescriptor.first.joinable())
-    {
-      jobDescriptor.first.join();
-    }    
-
     for (const auto& resPair : jobDescriptor.second)
     {
       mResMon.freeResource(resPair.first, resPair.second);
@@ -62,7 +52,7 @@ struct JobMonitor
   typedef std::unique_lock<std::mutex> Lock;
   std::mutex mJobMutex;
 
-  //(id, (thread, <resdesc>))
-  typedef std::map<int, std::pair<std::thread, ResourceDescriptor>> JobRecords;
+  //(id, (time_to_run, <resdesc>))
+  typedef std::map<int, std::pair<int, ResourceDescriptor>> JobRecords;
   JobRecords mJobRecords;
 };
